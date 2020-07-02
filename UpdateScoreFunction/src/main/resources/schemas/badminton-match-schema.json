@@ -1,0 +1,73 @@
+{
+  "required": [
+    "match"
+  ],
+  "type": "object",
+  "properties": {
+    "match": {
+      "type": "object",
+      "items": {
+        "$ref": "#/definitions/Match"
+      }
+    }
+  },
+  "definitions": {
+    "Match": {
+      "required": [
+        "pointsTarget",
+        "maxGames",
+        "setting",
+        "games"
+      ],
+      "type": "object",
+      "properties": {
+        "pointsTarget": {
+          "type": "number",
+          "enum": [
+            11,
+            15,
+            21
+          ]
+        },
+        "maxGames": {
+          "type": "number",
+          "enum": [
+            1,
+            2
+          ]
+        },
+        "setting": {
+          "type": "boolean"
+        },
+        "games": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Game"
+          }
+        },
+        "finished": {
+          "type": "boolean"
+        }
+      }
+    },
+    "Game": {
+      "type": "object",
+      "required": [
+        "pointsPlayed",
+        "pointsHistory"
+      ],
+      "properties": {
+        "pointsPlayed": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 59
+        },
+        "pointsHistory": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}
+

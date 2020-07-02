@@ -1,0 +1,7 @@
+.aws-sam/build/packaged-template.yaml
+.aws-sam/
+template.yaml
+.idea/
+.serverless/
+events/event.json
+UpdateScoreFunction/target/
