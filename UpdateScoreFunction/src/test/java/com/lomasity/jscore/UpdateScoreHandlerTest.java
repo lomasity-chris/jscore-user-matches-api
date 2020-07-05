@@ -98,6 +98,24 @@ public class UpdateScoreHandlerTest {
     }
 
     @Test
+    public void testFinished() throws IOException {
+
+        input.put("body", "{\"match\": {\"games\": [{ \"currentScore\": [0,0], \"pointsPlayed\": 0, \"pointsHistory\": 0 }], \"maxGames\": 1, \"pointsTarget\": 11, \"players\": [\"A\", \"B\"], \"finished\": false, \"setting\": false}}");
+        Map<String, Object> qsp = new HashMap<>();
+        qsp.put("pointWonBy","home");
+        input.put("queryStringParameters", qsp);
+
+        for (int i=0; i<=9; i++) {
+            ApiGatewayResponse response = handler.handleRequest(input, ctx);
+            assertThat(new ObjectMapper().readTree(response.getBody()).get("finished").asBoolean(), equalTo(false));
+            input.put("body","{\"match\":" + response.getBody() + "}");
+        }
+
+        ApiGatewayResponse response = handler.handleRequest(input, ctx);
+        assertThat(new ObjectMapper().readTree(response.getBody()).get("finished").asBoolean(), equalTo(true));
+    }
+
+    @Test
     public void testUndo() throws IOException {
 
         Map<String, Object> qsp = new HashMap<>();
