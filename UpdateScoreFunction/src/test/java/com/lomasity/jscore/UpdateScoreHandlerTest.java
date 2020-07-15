@@ -7,9 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -22,21 +20,23 @@ public class UpdateScoreHandlerTest {
     private Context ctx;
 
     @Before
-    public void createInput() throws IOException {
+    public void createInput() {
 
         handler = new UpdateScoreHandler();
         ctx = new TestContext();
         ((TestContext) ctx).setFunctionName("BadmintonMatch");
 
         input = new HashMap<>();
-        input.put("body", "{\"match\": {\"games\": [{ \"currentScore\": [0,0], \"pointsPlayed\": 0, \"pointsHistory\": 0 }], \"maxGames\": 1, \"pointsTarget\": 21, \"players\": [\"A\", \"B\"], \"finished\": false, \"setting\": false}}");
+        input.put("body", "{\"scoring\": { \"finished\": false, \"gamesTarget\": 1, \"pointsTarget\": 21, \"setting\": false, \"games\": [{ \"currentScore\": { \"home\": 0, \"away\": 0}, \"pointsPlayed\": 0, \"pointsHistory\": 0 }]}}");
+                          "{\"scoring\": { \"finished\": false,      \"maxGames\":1,\"pointsTarget\": 21, \"setting\": false, \"games\": [{ \"currentScore\": { \"home\": 0, \"away\": 0}, \"pointsHistory\":0, \"pointsPlayed\": 0}],}}
     }
 
     @Test
     public void testInputsAreCopiedToOutputs() throws IOException {
 
         Map<String, Object> qsp = new HashMap<>();
-        qsp.put("pointWonBy","home");
+        qsp.put("action","home");
+        qsp.put("sport","badminton");
         input.put("queryStringParameters", qsp);
 
         ApiGatewayResponse response = handler.handleRequest(input, ctx);
@@ -47,14 +47,15 @@ public class UpdateScoreHandlerTest {
 
         assertThat(outputJSONNode.get("pointsTarget").asInt(), equalTo(21));
         assertThat(outputJSONNode.get("setting").asBoolean(), equalTo(false));
-        assertThat(outputJSONNode.get("maxGames").asInt(), equalTo(1));
+        assertThat(outputJSONNode.get("gamesTarget").asInt(), equalTo(1));
     }
 
     @Test
     public void testHomePointWon() throws IOException {
 
         Map<String, Object> qsp = new HashMap<>();
-        qsp.put("pointWonBy","home");
+        qsp.put("action","home");
+        qsp.put("sport","badminton");
         input.put("queryStringParameters", qsp);
 
         ApiGatewayResponse response = handler.handleRequest(input, ctx);
@@ -67,9 +68,10 @@ public class UpdateScoreHandlerTest {
             assertThat(game.get("pointsHistory").asInt(), equalTo(0));
             assertThat(game.get("pointsPlayed").asInt(), equalTo(1));
 
-            List<Integer> scores = new ObjectMapper().convertValue(game.get("currentScore"), ArrayList.class);
-            assertThat(scores.get(0), equalTo(1));
-            assertThat(scores.get(1), equalTo(0));
+            final JsonNode currentScore = game.get("currentScore");
+            System.out.println(currentScore);
+            assertThat(currentScore.get("home").asInt(), equalTo(1));
+            assertThat(currentScore.get("away").asInt(), equalTo(0));
 
         }
     }
@@ -78,7 +80,8 @@ public class UpdateScoreHandlerTest {
     public void testAwayPointWon() throws IOException {
 
         Map<String, Object> qsp = new HashMap<>();
-        qsp.put("pointWonBy","away");
+        qsp.put("action","away");
+        qsp.put("sport","badminton");
         input.put("queryStringParameters", qsp);
 
         ApiGatewayResponse response = handler.handleRequest(input, ctx);
@@ -90,25 +93,25 @@ public class UpdateScoreHandlerTest {
             System.out.println(game);
             assertThat(game.get("pointsHistory").asInt(), equalTo(1));
             assertThat(game.get("pointsPlayed").asInt(), equalTo(1));
-
-            List<Integer> scores = new ObjectMapper().convertValue(game.get("currentScore"), ArrayList.class);
-            assertThat(scores.get(0), equalTo(0));
-            assertThat(scores.get(1), equalTo(1));
+            JsonNode currentScore = game.get("currentScore");
+            assertThat(currentScore.get("home").asInt(), equalTo(0));
+            assertThat(currentScore.get("away").asInt(), equalTo(1));
         }
     }
 
     @Test
     public void testFinished() throws IOException {
 
-        input.put("body", "{\"match\": {\"games\": [{ \"currentScore\": [0,0], \"pointsPlayed\": 0, \"pointsHistory\": 0 }], \"maxGames\": 1, \"pointsTarget\": 11, \"players\": [\"A\", \"B\"], \"finished\": false, \"setting\": false}}");
+        input.put("body", "{\"scoring\": { \"finished\": " + false + ", \"gamesTarget\": 1, \"pointsTarget\": 11, \"setting\": false, \"games\": [{ \"currentScore\": { \"home\": 0, \"away\": 0}, \"pointsPlayed\": 0, \"pointsHistory\": 0 }]}}");
         Map<String, Object> qsp = new HashMap<>();
-        qsp.put("pointWonBy","home");
+        qsp.put("action","home");
+        qsp.put("sport","badminton");
         input.put("queryStringParameters", qsp);
 
         for (int i=0; i<=9; i++) {
             ApiGatewayResponse response = handler.handleRequest(input, ctx);
             assertThat(new ObjectMapper().readTree(response.getBody()).get("finished").asBoolean(), equalTo(false));
-            input.put("body","{\"match\":" + response.getBody() + "}");
+            input.put("body","{\"scoring\":" + response.getBody() + "}");
         }
 
         ApiGatewayResponse response = handler.handleRequest(input, ctx);
@@ -119,9 +122,10 @@ public class UpdateScoreHandlerTest {
     public void testUndo() throws IOException {
 
         Map<String, Object> qsp = new HashMap<>();
-        qsp.put("pointWonBy","undo");
+        qsp.put("action","undo");
+        qsp.put("sport","badminton");
         input.put("queryStringParameters", qsp);
-        input.put("body", "{\"match\": {\"games\": [{ \"currentScore\": [0,1], \"pointsPlayed\": 1, \"pointsHistory\": 1 }], \"maxGames\": 1, \"pointsTarget\": 21, \"players\": [\"A\", \"B\"], \"finished\": false, \"setting\": false}}");
+        input.put("body", "{\"scoring\": { \"finished\": false, \"gamesTarget\": 1, \"pointsTarget\": 21, \"setting\": false, \"games\": [{ \"currentScore\": { \"home\": 0, \"away\": 1}, \"pointsPlayed\": 1, \"pointsHistory\": 1 }]}}");
 
         ApiGatewayResponse response = handler.handleRequest(input, ctx);
 
@@ -133,9 +137,9 @@ public class UpdateScoreHandlerTest {
             assertThat(game.get("pointsHistory").asInt(), equalTo(0));
             assertThat(game.get("pointsPlayed").asInt(), equalTo(0));
 
-            List<Integer> scores = new ObjectMapper().convertValue(game.get("currentScore"), ArrayList.class);
-            assertThat(scores.get(0), equalTo(0));
-            assertThat(scores.get(1), equalTo(0));
+            JsonNode currentScore = game.get("currentScore");
+            assertThat(currentScore.get("home").asInt(), equalTo(0));
+            assertThat(currentScore.get("away").asInt(), equalTo(0));
         }
     }
 

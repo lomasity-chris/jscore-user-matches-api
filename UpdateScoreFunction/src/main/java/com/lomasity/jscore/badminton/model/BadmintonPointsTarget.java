@@ -1,26 +1,26 @@
 package com.lomasity.jscore.badminton.model;
 
-public enum PointsTarget {
+public enum BadmintonPointsTarget {
 
 	ELEVEN(11, 15), FIFTEEN(15, 21), TWENTY_ONE(21, 30);
 
 	private int target;
 	private int settingTarget;
 
-	private PointsTarget(int target, int settingTarget) {
+	private BadmintonPointsTarget(int target, int settingTarget) {
 		this.target = target;
 		this.settingTarget = settingTarget;
 	}
 
-	int getTarget() {
+	public int getTarget() {
 		return this.target;
 	}
 
-	int getSettingTarget() {
+	public int getSettingTarget() {
 		return this.settingTarget;
 	}
 
-	static PointsTarget getWithTarget(int target) {
+	public static BadmintonPointsTarget getWithTarget(int target) {
 		switch (target) {
 		case 11:
 			return ELEVEN;

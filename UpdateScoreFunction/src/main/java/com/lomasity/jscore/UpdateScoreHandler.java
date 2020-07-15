@@ -4,19 +4,14 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lomasity.jscore.badminton.model.BadmintonMatch;
-import com.lomasity.jscore.badminton.model.BadmintonMatchManager;
+import com.lomasity.jscore.manager.BadmintonManager;
+import com.lomasity.jscore.manager.Manager;
 import com.lomasity.jscore.model.TeamType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.everit.json.schema.Schema;
-import org.everit.json.schema.ValidationException;
-import org.everit.json.schema.loader.SchemaLoader;
-import org.json.JSONObject;
-import org.json.JSONTokener;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.InputStream;
-import java.util.Collections;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,9 +19,12 @@ public class UpdateScoreHandler implements RequestHandler<Map<String, Object>, A
 
     private static final Logger LOG = LogManager.getLogger(UpdateScoreHandler.class);
 
-    private static final String HOME = "home";
-    private static final String AWAY = "away";
+    private static final String INCREMENT_HOME = "home";
+    private static final String INCREMENT_AWAY = "away";
     private static final String UNDO = "undo";
+
+    private static final String BADMINTON = "badminton";
+
 
     @Override
     public ApiGatewayResponse handleRequest(Map<String, Object> input, Context context) {
@@ -39,36 +37,27 @@ public class UpdateScoreHandler implements RequestHandler<Map<String, Object>, A
         try {
             System.out.println("handleRequest: " + input);
 
-            try (InputStream inputStream = getClass().getResourceAsStream("/schemas/badminton-match-schema.json")) {
-                JSONObject rawSchema = new JSONObject(new JSONTokener(inputStream));
-                Schema schema = SchemaLoader.load(rawSchema);
-                schema.validate(new JSONObject((String) input.get("body")));
-            }
+            JsonNode scoring = getScoring(input);
+            String action = getAction(input);
+            String sport = getSport(input);
 
-            JsonNode body = new ObjectMapper().readTree((String) input.get("body"));
-            JsonNode matchNode = body.get("match");
-            Map<String, Object> qsp = (Map<String, Object>) input.get("queryStringParameters");
-            String pointWonBy = (String) qsp.get("pointWonBy");
+            Manager manager = getManager(scoring, sport);
 
-            BadmintonMatch match = new BadmintonMatch(matchNode);
-
-            BadmintonMatchManager manager = new BadmintonMatchManager(match);
-
-            switch (pointWonBy) {
-                case HOME:
-                    manager.pointWon(TeamType.HOME);
+            switch (action) {
+                case INCREMENT_HOME:
+                    manager.incrementScoreOf(TeamType.HOME);
                     break;
-                case AWAY:
-                    manager.pointWon(TeamType.AWAY);
+                case INCREMENT_AWAY:
+                    manager.incrementScoreOf(TeamType.AWAY);
                     break;
                 case UNDO:
                     manager.undoScoreChange();
                     break;
                 default:
-                    throw new IllegalArgumentException(pointWonBy + " is not a valid team type");
+                    throw new IllegalArgumentException(action + " is not a valid action");
             }
 
-            return ApiGatewayResponse.builder().setStatusCode(200).setObjectBody(match)
+            return ApiGatewayResponse.builder().setStatusCode(200).setObjectBody(manager.getScoring())
                     .setHeaders(responseHeaders).build();
 
 
@@ -85,5 +74,31 @@ public class UpdateScoreHandler implements RequestHandler<Map<String, Object>, A
         }
     }
 
+    private Manager getManager(JsonNode scoring, @NotNull String sport) throws IllegalAccessException {
+        Manager manager;
+        switch (sport) {
+            case BADMINTON:
+                manager = new BadmintonManager(scoring);
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown sport: " + sport);
+        }
+        return manager;
+    }
+
+    private JsonNode getScoring(@NotNull Map<String, Object> input) throws IOException {
+        JsonNode body = new ObjectMapper().readTree((String) input.get("body"));
+        return body.get("scoring");
+    }
+
+    private String getAction(@NotNull Map<String, Object> input) {
+        Map<String, Object> queryStringParameters = (Map<String, Object>) input.get("queryStringParameters");
+        return (String) queryStringParameters.get("action");
+    }
+
+    private String getSport(Map<String, Object> input) {
+        Map<String, Object> queryStringParameters = (Map<String, Object>) input.get("queryStringParameters");
+        return ((String) queryStringParameters.get("sport")).toLowerCase();
+    }
 
 }

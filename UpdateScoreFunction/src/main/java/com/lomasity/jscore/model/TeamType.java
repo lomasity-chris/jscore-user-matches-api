@@ -1,7 +1,5 @@
 package com.lomasity.jscore.model;
 
-import com.lomasity.jscore.badminton.model.PointsTarget;
-
 public enum TeamType {
     
     HOME, AWAY, NEITHER;
