@@ -27,8 +27,7 @@ public class UpdateScoreHandlerTest {
         ((TestContext) ctx).setFunctionName("BadmintonMatch");
 
         input = new HashMap<>();
-        input.put("body", "{\"scoring\": { \"finished\": false, \"gamesTarget\": 1, \"pointsTarget\": 21, \"setting\": false, \"games\": [{ \"currentScore\": { \"home\": 0, \"away\": 0}, \"pointsPlayed\": 0, \"pointsHistory\": 0 }]}}");
-                          "{\"scoring\": { \"finished\": false,      \"maxGames\":1,\"pointsTarget\": 21, \"setting\": false, \"games\": [{ \"currentScore\": { \"home\": 0, \"away\": 0}, \"pointsHistory\":0, \"pointsPlayed\": 0}],}}
+        input.put("body", "{\"scoring\": { \"finished\": false, \"stopped\": false, \"gamesTarget\": 1, \"pointsTarget\": 21, \"setting\": false, \"games\": [{ \"currentScore\": { \"home\": 0, \"away\": 0}, \"pointsPlayed\": 0, \"pointsHistory\": 0 }]}}");
     }
 
     @Test
@@ -102,7 +101,7 @@ public class UpdateScoreHandlerTest {
     @Test
     public void testFinished() throws IOException {
 
-        input.put("body", "{\"scoring\": { \"finished\": " + false + ", \"gamesTarget\": 1, \"pointsTarget\": 11, \"setting\": false, \"games\": [{ \"currentScore\": { \"home\": 0, \"away\": 0}, \"pointsPlayed\": 0, \"pointsHistory\": 0 }]}}");
+        input.put("body", "{\"scoring\": { \"finished\": " + false + ", \"stopped\": false, \"gamesTarget\": 1, \"pointsTarget\": 11, \"setting\": false, \"games\": [{ \"currentScore\": { \"home\": 0, \"away\": 0}, \"pointsPlayed\": 0, \"pointsHistory\": 0 }]}}");
         Map<String, Object> qsp = new HashMap<>();
         qsp.put("action","home");
         qsp.put("sport","badminton");
@@ -125,7 +124,7 @@ public class UpdateScoreHandlerTest {
         qsp.put("action","undo");
         qsp.put("sport","badminton");
         input.put("queryStringParameters", qsp);
-        input.put("body", "{\"scoring\": { \"finished\": false, \"gamesTarget\": 1, \"pointsTarget\": 21, \"setting\": false, \"games\": [{ \"currentScore\": { \"home\": 0, \"away\": 1}, \"pointsPlayed\": 1, \"pointsHistory\": 1 }]}}");
+        input.put("body", "{\"scoring\": { \"finished\": false, \"stopped\": false, \"gamesTarget\": 1, \"pointsTarget\": 21, \"setting\": false, \"games\": [{ \"currentScore\": { \"home\": 0, \"away\": 1}, \"pointsPlayed\": 1, \"pointsHistory\": 1 }]}}");
 
         ApiGatewayResponse response = handler.handleRequest(input, ctx);
 

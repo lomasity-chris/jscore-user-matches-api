@@ -8,6 +8,7 @@ import com.lomasity.jscore.model.TeamType;
 public class BadmintonManager implements Manager {
 
     private static final String FINISHED = "finished";
+    private static final String STOPPED = "stopped";
     private static final String GAMES_TARGET = "gamesTarget";
     private static final String POINTS_TARGET = "pointsTarget";
     private static final String SETTING = "setting";
@@ -21,12 +22,13 @@ public class BadmintonManager implements Manager {
 
     public BadmintonManager(JsonNode jsonScoring) {
 
-        boolean finished = jsonScoring.get(FINISHED).asBoolean();
+        boolean stopped = is(STOPPED, jsonScoring);
+        boolean finished = is(FINISHED, jsonScoring);
+        boolean setting = is(SETTING, jsonScoring);
         int gamesTarget = jsonScoring.get(GAMES_TARGET).asInt();
         int pointsTarget = jsonScoring.get(POINTS_TARGET).asInt();
-        boolean setting = jsonScoring.get(SETTING).asBoolean();
 
-        this.scoring = new BadmintonScoring(finished, gamesTarget, pointsTarget, setting);
+        this.scoring = new BadmintonScoring(finished, gamesTarget, pointsTarget, setting, stopped);
 
         for (final JsonNode jsonGame : jsonScoring.get(GAMES)) {
 
@@ -37,6 +39,10 @@ public class BadmintonManager implements Manager {
         }
 
         gameManager = new BadmintonGameManager(scoring);
+    }
+
+    private boolean is(String fieldName,JsonNode jsonScoring) {
+        return jsonScoring.get(fieldName) != null && jsonScoring.get(fieldName).asBoolean();
     }
 
     public void incrementScoreOf(TeamType teamType) {
@@ -84,16 +90,22 @@ public class BadmintonManager implements Manager {
 
     public void undoScoreChange() {
 
-        BadmintonGame currentGame = scoring.getGames().get(scoring.getGames().size() - 1);
+        if (scoring.isStopped()) {
+            scoring.setStopped(false);
+            scoring.setFinished(false);
+        } else {
 
-        // If the game has just finished need to remove the new game before undoing the change on the required game.
-        if (currentGame.getPointsPlayed() == 0) {
-            scoring.getGames().remove(scoring.getGames().size() - 1);
+            BadmintonGame currentGame = scoring.getGames().get(scoring.getGames().size() - 1);
+
+            // If the game has just finished need to remove the new game before undoing the change on the required game.
+            if (currentGame.getPointsPlayed() == 0) {
+                scoring.getGames().remove(scoring.getGames().size() - 1);
+            }
+
+            gameManager.undoScoreChange();
+
+            this.scoring.setFinished(isMatchFinished());
         }
-
-        gameManager.undoScoreChange();
-
-        this.scoring.setFinished(isMatchFinished());
     }
 
     @Override

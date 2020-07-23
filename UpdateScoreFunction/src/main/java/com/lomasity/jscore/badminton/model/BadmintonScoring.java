@@ -10,16 +10,17 @@ public class BadmintonScoring implements Scoring {
     private final int gamesTarget;
     private final int pointsTarget;
     private final boolean setting;
-
     private boolean finished;
+    private boolean stopped;
     private List<BadmintonGame> games;
 
-    public BadmintonScoring(boolean finished, int gamesTarget, int pointsTarget, boolean setting) {
+    public BadmintonScoring(boolean finished, int gamesTarget, int pointsTarget, boolean setting, boolean stopped) {
 
         this.finished = finished;
         this.gamesTarget = gamesTarget;
         this.pointsTarget = pointsTarget;
         this.setting = setting;
+        this.stopped = stopped;
     }
 
     public List<BadmintonGame> getGames() {
@@ -30,7 +31,7 @@ public class BadmintonScoring implements Scoring {
     }
 
     public boolean isFinished() {
-        return finished;
+        return this.finished;
     }
 
     public void setFinished(boolean finished) {
@@ -47,6 +48,14 @@ public class BadmintonScoring implements Scoring {
 
     public int getGamesTarget() {
         return this.gamesTarget;
+    }
+
+    public boolean isStopped() {
+        return this.stopped;
+    }
+
+    public void setStopped(boolean stopped) {
+        this.stopped = stopped;
     }
 }
 

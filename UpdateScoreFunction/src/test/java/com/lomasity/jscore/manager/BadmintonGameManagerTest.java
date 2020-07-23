@@ -300,7 +300,7 @@ public class BadmintonGameManagerTest {
 
 	private void startGame(BadmintonPointsTarget badmintonPointsTarget, boolean setting) {
 
-		scoring = new BadmintonScoring(false, 1, badmintonPointsTarget.getTarget(), setting);
+		scoring = new BadmintonScoring(false, 1, badmintonPointsTarget.getTarget(), setting, false);
 		scoring.getGames().add(new BadmintonGame());
 		badmintonGameManager = new BadmintonGameManager(scoring);
 		checkCurrentScore(0,0);
